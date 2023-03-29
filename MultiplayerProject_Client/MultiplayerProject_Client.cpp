@@ -8,52 +8,74 @@
 using namespace sf;
 using namespace std;
 
-
-class Player
-{
-	Text t;
-	Sprite body, netGhost;
-	bool possesed = false;
-	
+class Player { // класс Игрока
 public:
+	float x, y, w, h, dx, dy, speed; //координаты игрока х и у, высота ширина, ускорение (по х и по у), сама скорость
+	int dir; //направление (direction) движения игрока
+	String File; //файл с расширением
+	Image image;//сфмл изображение
+	Texture texture;//сфмл текстура
+	Sprite sprite, netGhost;//сфмл спрайт
+	Text t;
+	bool possesed = false;
 	string name;
 	bool turned = false;
-	
-	Player(bool possesed = false):possesed(possesed) {};
+public:
+	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
+		dx = 0; dy = 0; speed = 0; dir = 0;
+	//	File = F;
+		w = W; h = H;
+
+		x = X; y = Y;
+		sprite.setTextureRect(IntRect(46.5, 0, w, h));
+		
+	};
+	void update(float time)
+	{
+		switch (dir)
+		{
+		case 0: dx = speed; dy = 0; break;
+		case 1: dx = -speed; dy = 0; break;
+		case 2: dx = 0; dy = speed; break;
+		case 3: dx = 0; dy = -speed; break;
+		}
+
+		x += dx * time;
+		y += dy * time;
+
+		speed = 0;
+		sprite.setPosition(x, y);
+		t.setPosition(x + w / 2 - t.getGlobalBounds().width / 2, y - t.getGlobalBounds().height);
+	};
 	void load(Texture& texture, Font& font)
 	{
-		body.setTexture(texture);
-		body.setTextureRect(IntRect(46.5 , 0, texture.getSize().x / 8, texture.getSize().y / 4));
+		sprite.setTexture(texture);
+		sprite.setTextureRect(IntRect(46.5, 0, w, h));
 		//body.setScale(2, 2);
-		if (!possesed) body.setColor(Color::Red);
+		if (!possesed) sprite.setColor(Color::Red);
 		netGhost.setTexture(texture);
 		//name = playerName;
 
 		t.setFont(font);
 		t.setString(name);
 		t.setFillColor(sf::Color::Red);
-		t.setPosition(body.getGlobalBounds().width / 2 - t.getGlobalBounds().width / 2, body.getPosition().y - t.getGlobalBounds().height);
+		t.setPosition(w / 2 - t.getGlobalBounds().width / 2, y - t.getGlobalBounds().height);
 	};
-	void setPosition(Vector2f newPos)
-	{
-		body.setPosition(newPos);
-		t.setPosition(newPos.x + body.getGlobalBounds().width / 2 - t.getGlobalBounds().width / 2, body.getPosition().y - t.getGlobalBounds().height);
-	};
-	void move(Vector2f normalizedMovementVec, Time cycleTime)
-	{
-		body.move({ normalizedMovementVec.x * 50 * cycleTime.asSeconds(), normalizedMovementVec.y * 50 * cycleTime.asSeconds() });
-		t.move({ normalizedMovementVec.x * 50 * cycleTime.asSeconds(), normalizedMovementVec.y * 50 * cycleTime.asSeconds() });
-	};
+	bool isPossesed() { return possesed; };
 	void draw(RenderWindow& window)
 	{
-		//window.draw(netGhost);
-		window.draw(body);
-		window.draw(t);
+	//window.draw(netGhost);
+	window.draw(sprite);
+	window.draw(t);
 	};
 
-	bool isPossesed() { return possesed; };
-	Vector2f getPos() { return body.getPosition(); };
 };
+
+
+
+
+
+
 
 vector<Player> playersVec;
 
@@ -66,27 +88,26 @@ string clientName;
 
 NetworkClient netC;
 
-Player player(true);
+
 
 void getUserInputData(string& playerName);
 void addPlayer(Texture& t_player, Font& font, string clientName);
 
 int main()
 {
-	RenderWindow window(sf::VideoMode(1280,720), "SFML works!");
+	RenderWindow window(sf::VideoMode(1280, 720), "SFML works!");
 
 	Image playerImage;
-	playerImage.loadFromFile("images/tanks.png");
+	playerImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tanks.png");
 	playerImage.createMaskFromColor(sf::Color::White);
 	Texture t_player;
 	t_player.loadFromImage(playerImage);
+	Player player(250, 250, 46.5, 46.5, true);
 
 	Font font;
-	font.loadFromFile("fonts/Inkulinati-Regular.otf");
-
-	
+	font.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/fonts/Inkulinati-Regular.otf");
 	getUserInputData(player.name);
-	player.load(t_player, font);
+	player.load(t_player,font);
 
 
 
@@ -98,17 +119,22 @@ int main()
 	netC.receiveConnectedClientsNames(namesVec);
 	for (int i = 0; i < namesVec.size(); i++)
 	{
-		addPlayer(t_player, font, namesVec[i]);
+		addPlayer(t_player,font, namesVec[i]);
 	}
 
 	Packet receivedDataPacket;
 	Packet sendDataPacket;
 
+	float CurrentFrame = 0;//хранит текущий кадр
+	Clock clock;
+	float time;
 
-	
+
+
 	while (window.isOpen())
 	{
 		cycleTime = cycleTimer.restart();
+		clock.restart();
 
 		if (netC.receiveData(receivedDataPacket, S_Ip, S_port) == Socket::Status::Done)
 		{
@@ -123,7 +149,7 @@ int main()
 						{
 							if (s != clientName)
 							{
-								addPlayer(t_player, font, s);
+								addPlayer(t_player,font, s);
 								cout << "New player connected: " << playersVec.back().name << endl;
 							}
 						}
@@ -142,7 +168,8 @@ int main()
 							{
 								if (s == playersVec[i].name) {
 									playersVec[i].turned = turn;
-									playersVec[i].setPosition({ x, y });
+									playersVec[i].sprite.setPosition(x, y);
+									playersVec[i].t.setPosition(x + playersVec[i].w / 2 - playersVec[i].t.getGlobalBounds().width / 2, y - playersVec[i].t.getGlobalBounds().height);
 								}
 							}
 						}
@@ -152,7 +179,7 @@ int main()
 		}
 
 		sendDataPacket.clear();
-		sendDataPacket << "DATA" << player.getPos().x << player.getPos().y << player.turned;
+		sendDataPacket << "DATA" << player.x << player.y << player.turned;
 		netC.sendData(sendDataPacket);
 
 
@@ -167,21 +194,38 @@ int main()
 
 		if (window.hasFocus())
 		{
-			if (Keyboard::isKeyPressed(Keyboard::W))
-				player.move({ 0, -1 }, cycleTime);
-			if (Keyboard::isKeyPressed(Keyboard::A))
-				player.move({ -1, 0 }, cycleTime);
-			if (Keyboard::isKeyPressed(Keyboard::S))
-				player.move({ 0, 1 }, cycleTime);
-			if (Keyboard::isKeyPressed(Keyboard::D)) {
-				player.move({ 1, 0 }, cycleTime);
-				if (!player.turned)
-					player.turned = true;
+			if ((Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::A)))) {
+				player.dir = 1; player.speed = 0.9;//dir =1 - направление вверх, speed =0.1 - скорость движения. Заметьте - время мы уже здесь ни на что не умножаем и нигде не используем каждый раз
+			
+				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5)); //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
+			}
+
+			if ((Keyboard::isKeyPressed(Keyboard::Right) || (Keyboard::isKeyPressed(Keyboard::D)))) {
+				player.dir = 0; player.speed = 0.9;//направление вправо, см выше
+				
+				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
+			}
+
+			if ((Keyboard::isKeyPressed(Keyboard::Up) || (Keyboard::isKeyPressed(Keyboard::W)))) {
+				player.dir = 3; player.speed = 0.9;//направление вправо, см выше
+			
+				player.sprite.setTextureRect(IntRect(96 * 1, 0, 46.5, 46.5));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
+
+			}
+
+			if ((Keyboard::isKeyPressed(Keyboard::Down) || (Keyboard::isKeyPressed(Keyboard::S)))) { //если нажата клавиша стрелка влево или англ буква А
+				player.dir = 2; player.speed = 0.9;//направление вправо, см выше
+			
+				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5)); //проходимся по координатам Х. получается 96,96*2,96*3 и опять 96
+
 			}
 		}
+		float time = clock.getElapsedTime().asMicroseconds();
+		time = time / 800;
+		player.update(time);
 
 		window.clear();
-		
+
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			playersVec[i].draw(window);
@@ -191,9 +235,11 @@ int main()
 
 		window.display();
 	}
+		
 
 	return 0;
-};
+	
+}
 
 void getUserInputData(string& playerName)
 {
@@ -210,8 +256,8 @@ void getUserInputData(string& playerName)
 
 void addPlayer(Texture& t_player, Font& font, string clientName)
 {
-	Player p;
+	Player p(250, 250, 46.5, 46.5, true);
 	playersVec.push_back(p);
 	playersVec.back().name = clientName;
-	playersVec.back().load(t_player, font);
+	playersVec.back().load(t_player,font);
 };
