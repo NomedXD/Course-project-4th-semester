@@ -2,6 +2,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 #include <vector>
+#include "map.h"
+#include "view.h"
 
 #include "NetworkClient.h"
 
@@ -22,10 +24,9 @@ public:
 	bool turned = false;
 public:
 	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
-		dx = 0; dy = 0; speed = 0; dir = 0;
+		dx = 0; dy = 0; speed = 2; dir = 0;
 	//	File = F;
 		w = W; h = H;
-
 		x = X; y = Y;
 		sprite.setTextureRect(IntRect(46.5, 0, w, h));
 		
@@ -96,6 +97,7 @@ void addPlayer(Texture& t_player, Font& font, string clientName);
 int main()
 {
 	RenderWindow window(sf::VideoMode(1280, 720), "SFML works!");
+	view.reset(FloatRect(250, 250, 1280, 720));
 
 	Image playerImage;
 	playerImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tanks.png");
@@ -128,6 +130,13 @@ int main()
 	float CurrentFrame = 0;//хранит текущий кадр
 	Clock clock;
 	float time;
+
+	Image map_image;//объект изображения для карты
+	map_image.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tanks.png");//загружаем файл для карты
+	Texture map;//текстура карты
+	map.loadFromImage(map_image);//заряжаем текстуру картинкой
+	Sprite s_map;//создаём спрайт для карты
+	s_map.setTexture(map);//заливаем текстуру спрайтом
 
 
 
@@ -195,36 +204,51 @@ int main()
 		if (window.hasFocus())
 		{
 			if ((Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::A)))) {
-				player.dir = 1; player.speed = 0.9;//dir =1 - направление вверх, speed =0.1 - скорость движения. Заметьте - время мы уже здесь ни на что не умножаем и нигде не используем каждый раз
-			
+				player.dir = 1; player.speed = 2;//dir =1 - направление вверх, speed =0.1 - скорость движения. Заметьте - время мы уже здесь ни на что не умножаем и нигде не используем каждый раз
 				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5)); //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
+				getplayercoordinateforview(player.x, player.y);
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Right) || (Keyboard::isKeyPressed(Keyboard::D)))) {
-				player.dir = 0; player.speed = 0.9;//направление вправо, см выше
-				
+				player.dir = 0; player.speed = 2;//направление вправо, см выше
+		
 				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
+				getplayercoordinateforview(player.x, player.y);
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Up) || (Keyboard::isKeyPressed(Keyboard::W)))) {
-				player.dir = 3; player.speed = 0.9;//направление вправо, см выше
+				player.dir = 3; player.speed = 2;//направление вправо, см выше
 			
 				player.sprite.setTextureRect(IntRect(96 * 1, 0, 46.5, 46.5));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
-
+				getplayercoordinateforview(player.x, player.y);
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Down) || (Keyboard::isKeyPressed(Keyboard::S)))) { //если нажата клавиша стрелка влево или англ буква А
-				player.dir = 2; player.speed = 0.9;//направление вправо, см выше
+				player.dir = 2; player.speed = 2;//направление вправо, см выше
 			
 				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5)); //проходимся по координатам Х. получается 96,96*2,96*3 и опять 96
-
+				getplayercoordinateforview(player.x, player.y);
 			}
 		}
 		float time = clock.getElapsedTime().asMicroseconds();
-		time = time / 800;
+		time = time / 2000;
 		player.update(time);
 
+		window.setView(view);
 		window.clear();
+		/////////////////////////////Рисуем карту/////////////////////
+		for (int i = 0; i < HEIGHT_MAP; i++)
+			for (int j = 0; j < WIDTH_MAP; j++)
+			{
+				if (TileMap[i][j] == ' ')  s_map.setTextureRect(IntRect(0, 0, 46.5, 46.5)); //если встретили символ пробел, то рисуем 1й квадратик
+				if (TileMap[i][j] == 's')  s_map.setTextureRect(IntRect(46.5*7, 46.5 * 3, 46.5, 46.5));//если встретили символ s, то рисуем 2й квадратик
+				if ((TileMap[i][j] == '0')) s_map.setTextureRect(IntRect(0, 46.5 * 3, 46.5, 46.5));//если встретили символ 0, то рисуем 3й квадратик
+
+
+				s_map.setPosition(j * 47, i * 47);//по сути раскидывает квадратики, превращая в карту. то есть задает каждому из них позицию. если убрать, то вся карта нарисуется в одном квадрате 32*32 и мы увидим один квадрат
+
+				window.draw(s_map);//рисуем квадратики на экран
+			}
 
 		for (int i = 0; i < playersVec.size(); i++)
 		{
