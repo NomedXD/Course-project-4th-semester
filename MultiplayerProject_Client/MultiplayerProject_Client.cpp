@@ -24,11 +24,11 @@ public:
 	bool turned = false;
 public:
 	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
-		dx = 0; dy = 0; speed = 2; dir = 0;
+		dx = 0; dy = 0; speed = 1; dir = 0;
 	//	File = F;
 		w = W; h = H;
 		x = X; y = Y;
-		sprite.setTextureRect(IntRect(46.5, 0, w, h));
+		sprite.setTextureRect(IntRect(0, 0, w, h));
 		
 	};
 	void update(float time)
@@ -47,11 +47,45 @@ public:
 		speed = 0;
 		sprite.setPosition(x, y);
 		t.setPosition(x + w / 2 - t.getGlobalBounds().width / 2, y - t.getGlobalBounds().height);
+		interactionWithMap();//вызываем функцию, отвечающую за взаимодействие с картой
 	};
+
+	void interactionWithMap()//ф-ция взаимодействия с картой
+	{
+
+		for (int i = y / 42; i < (y + h) / 42; i++)//проходимся по тайликам, контактирующим с игроком, то есть по всем квадратикам размера 32*32, которые мы окрашивали в 9 уроке. про условия читайте ниже.
+			for (int j = x / 42; j < (x + w) / 42; j++)//икс делим на 32, тем самым получаем левый квадратик, с которым персонаж соприкасается. (он ведь больше размера 32*32, поэтому может одновременно стоять на нескольких квадратах). А j<(x + w) / 32 - условие ограничения координат по иксу. то есть координата самого правого квадрата, который соприкасается с персонажем. таким образом идем в цикле слева направо по иксу, проходя по от левого квадрата (соприкасающегося с героем), до правого квадрата (соприкасающегося с героем)
+			{
+				if (TileMap[i][j] == '0')//если наш квадратик соответствует символу 0 (стена), то проверяем "направление скорости" персонажа:
+				{
+					if (dy > 0)//если мы шли вниз,
+					{
+						y = i * 42 - h;//то стопорим координату игрек персонажа. сначала получаем координату нашего квадратика на карте(стены) и затем вычитаем из высоты спрайта персонажа.
+					}
+					if (dy < 0)
+					{
+						y = i * 42 + 42;//аналогично с ходьбой вверх. dy<0, значит мы идем вверх (вспоминаем координаты паинта)
+					}
+					if (dx > 0)
+					{
+						x = j * 42 - w;//если идем вправо, то координата Х равна стена (символ 0) минус ширина персонажа
+					}
+					if (dx < 0)
+					{
+						x = j * 42 + 42;//аналогично идем влево
+					}
+				}
+
+				if (TileMap[i][j] == 's') { //если символ равен 's' (камень)
+					x = 300; y = 300;//какое то действие... например телепортация героя
+					TileMap[i][j] = ' ';//убираем камень, типа взяли бонус. можем и не убирать, кстати.
+				}
+			}
+	}
 	void load(Texture& texture, Font& font)
 	{
 		sprite.setTexture(texture);
-		sprite.setTextureRect(IntRect(46.5, 0, w, h));
+		sprite.setTextureRect(IntRect(0, 0, w, h));
 		//body.setScale(2, 2);
 		if (!possesed) sprite.setColor(Color::Red);
 		netGhost.setTexture(texture);
@@ -69,6 +103,9 @@ public:
 	window.draw(sprite);
 	window.draw(t);
 	};
+	FloatRect getRect() {
+		return FloatRect(x, y, w, h);
+	}
 
 };
 
@@ -89,22 +126,20 @@ string clientName;
 
 NetworkClient netC;
 
-
-
 void getUserInputData(string& playerName);
 void addPlayer(Texture& t_player, Font& font, string clientName);
 
 int main()
 {
 	RenderWindow window(sf::VideoMode(1280, 720), "SFML works!");
-	view.reset(FloatRect(250, 250, 1280, 720));
 
 	Image playerImage;
-	playerImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tanks.png");
+	playerImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");
 	playerImage.createMaskFromColor(sf::Color::White);
 	Texture t_player;
 	t_player.loadFromImage(playerImage);
-	Player player(250, 250, 46.5, 46.5, true);
+	Player player(250, 250, 42, 42, true);
+	view.reset(FloatRect(player.x, player.y, 1280, 720));
 
 	Font font;
 	font.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/fonts/Inkulinati-Regular.otf");
@@ -132,7 +167,7 @@ int main()
 	float time;
 
 	Image map_image;//объект изображения для карты
-	map_image.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tanks.png");//загружаем файл для карты
+	map_image.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");//загружаем файл для карты
 	Texture map;//текстура карты
 	map.loadFromImage(map_image);//заряжаем текстуру картинкой
 	Sprite s_map;//создаём спрайт для карты
@@ -204,35 +239,50 @@ int main()
 		if (window.hasFocus())
 		{
 			if ((Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::A)))) {
-				player.dir = 1; player.speed = 2;//dir =1 - направление вверх, speed =0.1 - скорость движения. Заметьте - время мы уже здесь ни на что не умножаем и нигде не используем каждый раз
-				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5)); //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
-				getplayercoordinateforview(player.x, player.y);
+				player.dir = 1; player.speed = 1;//dir =1 - направление вверх, speed =0.1 - скорость движения. Заметьте - время мы уже здесь ни на что не умножаем и нигде не используем каждый раз
+				player.sprite.setTextureRect(IntRect(42 * 0, 0, 42, 42)); //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Right) || (Keyboard::isKeyPressed(Keyboard::D)))) {
-				player.dir = 0; player.speed = 2;//направление вправо, см выше
-		
-				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
-				getplayercoordinateforview(player.x, player.y);
+				player.dir = 0; player.speed = 1;//направление вправо, см выше
+				player.sprite.setTextureRect(IntRect(42 * 2, 0, 42, 42));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Up) || (Keyboard::isKeyPressed(Keyboard::W)))) {
-				player.dir = 3; player.speed = 2;//направление вправо, см выше
-			
-				player.sprite.setTextureRect(IntRect(96 * 1, 0, 46.5, 46.5));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
-				getplayercoordinateforview(player.x, player.y);
+				player.dir = 3; player.speed = 1;//направление вправо, см выше
+				player.sprite.setTextureRect(IntRect(42 * 1, 0, 42, 42));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Down) || (Keyboard::isKeyPressed(Keyboard::S)))) { //если нажата клавиша стрелка влево или англ буква А
-				player.dir = 2; player.speed = 2;//направление вправо, см выше
-			
-				player.sprite.setTextureRect(IntRect(96 * 2, 0, 46.5, 46.5)); //проходимся по координатам Х. получается 96,96*2,96*3 и опять 96
-				getplayercoordinateforview(player.x, player.y);
+				player.dir = 2; player.speed = 1;//направление вправо, см выше
+				player.sprite.setTextureRect(IntRect(96 * 3, 0, 42, 42)); //проходимся по координатам Х. получается 96,96*2,96*3 и опять 96
 			}
 		}
+		getplayercoordinateforview(player.x, player.y);
 		float time = clock.getElapsedTime().asMicroseconds();
-		time = time / 2000;
+		time = time / 500;
 		player.update(time);
+		//for (int i = 0; i < playersVec.size(); i++)
+		//{
+		//	if (player.getRect().intersects(playersVec[i].getRect())) {
+		//		if (player.dy > 0)//если мы шли вниз,
+		//		{
+		//			player.y = playersVec[i].y - player.h;//то стопорим координату игрек персонажа. сначала получаем координату нашего квадратика на карте(стены) и затем вычитаем из высоты спрайта персонажа.
+		//		}
+		//		if (player.dy < 0)
+		//		{
+		//			player.y = playersVec[i].y + player.h;//аналогично с ходьбой вверх. dy<0, значит мы идем вверх (вспоминаем координаты паинта)
+		//		}
+		//		if (player.dx > 0)
+		//		{
+		//			player.x = playersVec[i].x - player.w;//если идем вправо, то координата Х равна стена (символ 0) минус ширина персонажа
+		//		}
+		//		if (player.dx < 0)
+		//		{
+		//			player.x = playersVec[i].x +player.w;//аналогично идем влево
+		//		}
+		//	}
+		//}
 
 		window.setView(view);
 		window.clear();
@@ -240,12 +290,12 @@ int main()
 		for (int i = 0; i < HEIGHT_MAP; i++)
 			for (int j = 0; j < WIDTH_MAP; j++)
 			{
-				if (TileMap[i][j] == ' ')  s_map.setTextureRect(IntRect(0, 0, 46.5, 46.5)); //если встретили символ пробел, то рисуем 1й квадратик
-				if (TileMap[i][j] == 's')  s_map.setTextureRect(IntRect(46.5*7, 46.5 * 3, 46.5, 46.5));//если встретили символ s, то рисуем 2й квадратик
-				if ((TileMap[i][j] == '0')) s_map.setTextureRect(IntRect(0, 46.5 * 3, 46.5, 46.5));//если встретили символ 0, то рисуем 3й квадратик
+				if (TileMap[i][j] == ' ')  s_map.setTextureRect(IntRect(0, 42*2, 42, 42)); //если встретили символ пробел, то рисуем 1й квадратик
+				if (TileMap[i][j] == 's')  s_map.setTextureRect(IntRect(42*3, 42 * 2, 42, 42));//если встретили символ s, то рисуем 2й квадратик
+				if ((TileMap[i][j] == '0')) s_map.setTextureRect(IntRect(42*2, 42 * 2, 42, 42));//если встретили символ 0, то рисуем 3й квадратик
 
 
-				s_map.setPosition(j * 47, i * 47);//по сути раскидывает квадратики, превращая в карту. то есть задает каждому из них позицию. если убрать, то вся карта нарисуется в одном квадрате 32*32 и мы увидим один квадрат
+				s_map.setPosition(j * 42, i * 42);//по сути раскидывает квадратики, превращая в карту. то есть задает каждому из них позицию. если убрать, то вся карта нарисуется в одном квадрате 32*32 и мы увидим один квадрат
 
 				window.draw(s_map);//рисуем квадратики на экран
 			}
@@ -280,7 +330,7 @@ void getUserInputData(string& playerName)
 
 void addPlayer(Texture& t_player, Font& font, string clientName)
 {
-	Player p(250, 250, 46.5, 46.5, true);
+	Player p(250, 250, 42, 42, true);
 	playersVec.push_back(p);
 	playersVec.back().name = clientName;
 	playersVec.back().load(t_player,font);
