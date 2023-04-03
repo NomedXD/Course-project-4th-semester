@@ -212,6 +212,8 @@ int main()
 							{
 								if (s == playersVec[i].name) {
 									playersVec[i].turned = turn;
+									playersVec[i].x = x;
+									playersVec[i].y = y;
 									playersVec[i].sprite.setPosition(x, y);
 									playersVec[i].t.setPosition(x + playersVec[i].w / 2 - playersVec[i].t.getGlobalBounds().width / 2, y - playersVec[i].t.getGlobalBounds().height);
 								}
@@ -262,27 +264,27 @@ int main()
 		float time = clock.getElapsedTime().asMicroseconds();
 		time = time / 500;
 		player.update(time);
-		//for (int i = 0; i < playersVec.size(); i++)
-		//{
-		//	if (player.getRect().intersects(playersVec[i].getRect())) {
-		//		if (player.dy > 0)//если мы шли вниз,
-		//		{
-		//			player.y = playersVec[i].y - player.h;//то стопорим координату игрек персонажа. сначала получаем координату нашего квадратика на карте(стены) и затем вычитаем из высоты спрайта персонажа.
-		//		}
-		//		if (player.dy < 0)
-		//		{
-		//			player.y = playersVec[i].y + player.h;//аналогично с ходьбой вверх. dy<0, значит мы идем вверх (вспоминаем координаты паинта)
-		//		}
-		//		if (player.dx > 0)
-		//		{
-		//			player.x = playersVec[i].x - player.w;//если идем вправо, то координата Х равна стена (символ 0) минус ширина персонажа
-		//		}
-		//		if (player.dx < 0)
-		//		{
-		//			player.x = playersVec[i].x +player.w;//аналогично идем влево
-		//		}
-		//	}
-		//}
+		for (int i = 0; i < playersVec.size(); i++)
+		{
+			if (player.getRect().intersects(playersVec[i].getRect())) {
+				if (player.dy > 0)//если мы шли вниз,
+				{
+					player.y = playersVec[i].y - player.h;//то стопорим координату игрек персонажа. сначала получаем координату нашего квадратика на карте(стены) и затем вычитаем из высоты спрайта персонажа.
+				}
+				if (player.dy < 0)
+				{
+					player.y = playersVec[i].y + player.h;//аналогично с ходьбой вверх. dy<0, значит мы идем вверх (вспоминаем координаты паинта)
+				}
+				if (player.dx > 0)
+				{
+					player.x = playersVec[i].x - player.w;//если идем вправо, то координата Х равна стена (символ 0) минус ширина персонажа
+				}
+				if (player.dx < 0)
+				{
+					player.x = playersVec[i].x +player.w;//аналогично идем влево
+				}
+			}
+		}
 
 		window.setView(view);
 		window.clear();
