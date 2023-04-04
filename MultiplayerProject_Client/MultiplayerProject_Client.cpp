@@ -22,6 +22,7 @@ public:
 	bool possesed = false;
 	string name;
 	bool turned = false;
+	float currentFrame;
 public:
 	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
 		dx = 0; dy = 0; speed = 1; dir = 0;
@@ -29,7 +30,7 @@ public:
 		w = W; h = H;
 		x = X; y = Y;
 		sprite.setTextureRect(IntRect(0, 0, w, h));
-		
+		currentFrame = 0;
 	};
 	void update(float time)
 	{
@@ -238,30 +239,41 @@ int main()
 				window.close();
 		}
 
+		
+		float time = clock.getElapsedTime().asMicroseconds();
+		time = time / 500;
 		if (window.hasFocus())
 		{
 			if ((Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::A)))) {
 				player.dir = 1; player.speed = 1;//dir =1 - направление вверх, speed =0.1 - скорость движени€. «аметьте - врем€ мы уже здесь ни на что не умножаем и нигде не используем каждый раз
-				player.sprite.setTextureRect(IntRect(42 * 0, 0, 42, 42)); //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
+				CurrentFrame += 0.1 * time;
+				if (CurrentFrame > 8) CurrentFrame -= 8;
+				player.sprite.setTextureRect(IntRect(42 * int(CurrentFrame)+42, 42*3, -42, 42)); //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
 			}
-
+			
 			if ((Keyboard::isKeyPressed(Keyboard::Right) || (Keyboard::isKeyPressed(Keyboard::D)))) {
 				player.dir = 0; player.speed = 1;//направление вправо, см выше
-				player.sprite.setTextureRect(IntRect(42 * 2, 0, 42, 42));  //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
+				CurrentFrame += 0.1 * time;
+				if (CurrentFrame > 8) CurrentFrame -= 8;
+				player.sprite.setTextureRect(IntRect(42 * int(CurrentFrame), 42 * 3, 42, 42));  //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Up) || (Keyboard::isKeyPressed(Keyboard::W)))) {
 				player.dir = 3; player.speed = 1;//направление вправо, см выше
-				player.sprite.setTextureRect(IntRect(42 * 1, 0, 42, 42));  //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
+				CurrentFrame += 0.1 * time;
+				if (CurrentFrame > 8) CurrentFrame -= 8;
+				player.sprite.setTextureRect(IntRect(42 * int(CurrentFrame), 0, 42, 42));  //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Down) || (Keyboard::isKeyPressed(Keyboard::S)))) { //если нажата клавиша стрелка влево или англ буква ј
 				player.dir = 2; player.speed = 1;//направление вправо, см выше
-				player.sprite.setTextureRect(IntRect(96 * 3, 0, 42, 42)); //проходимс€ по координатам ’. получаетс€ 96,96*2,96*3 и оп€ть 96
+				CurrentFrame += 0.1 * time;
+				if (CurrentFrame > 8) CurrentFrame -= 8;
+				player.sprite.setTextureRect(IntRect(42 * int(CurrentFrame), 42, 42, -42)); //проходимс€ по координатам ’. получаетс€ 96,96*2,96*3 и оп€ть 96
 			}
 		}
 		getplayercoordinateforview(player.x, player.y);
-		float time = clock.getElapsedTime().asMicroseconds();
+		time = clock.getElapsedTime().asMicroseconds();
 		time = time / 500;
 		player.update(time);
 		for (int i = 0; i < playersVec.size(); i++)
