@@ -4,7 +4,6 @@ NetworkServer::NetworkServer()
 {
 	//listener.setBlocking(true);
 	
-
 }
 
 Socket::Status NetworkServer::init()

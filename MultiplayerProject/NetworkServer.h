@@ -19,6 +19,8 @@ struct Client
 
 	Vector2f pos{ 5,5 };
 	bool turned;
+	int direction;
+	float curFrame;
 };
 
 class NetworkServer
