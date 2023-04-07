@@ -26,7 +26,7 @@ public:
 	Clock timeShootC;
 public:
 	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
-		dx = 0; dy = 0; speed = 1; dir = 3;
+		dx = 0; dy = 0; speed = 0.08; dir = 3;
 	//	File = F;
 		w = W; h = H;
 		x = X; y = Y;
@@ -141,7 +141,7 @@ public:
 		x = X;
 		y = Y;
 		direction = dir;
-		speed = 3;
+		speed = 0.2;
 		w = h = W;
 		life = true;
 		BulletImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");//загрузили картинку в объект изображения
@@ -187,16 +187,7 @@ public:
 
 };
 
-
-
-
-
-
-
 vector<Player> playersVec;
-
-Clock cycleTimer;
-Time cycleTime;
 
 IpAddress S_Ip;
 unsigned short S_port;
@@ -238,7 +229,6 @@ int main()
 	Packet sendDataPacket;
 
 	Clock clock;
-	float time;
 
 	Image map_image;//объект изображения для карты
 	map_image.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");//загружаем файл для карты
@@ -254,8 +244,10 @@ int main()
 
 	while (window.isOpen())
 	{
-		cycleTime = cycleTimer.restart();
+		float time = clock.getElapsedTime().asMicroseconds();
+		// Перезагрузка времени
 		clock.restart();
+		time = time / 800;
 
 		if (netC.receiveData(receivedDataPacket, S_Ip, S_port) == Socket::Status::Done)
 		{
@@ -332,35 +324,32 @@ int main()
 			player.timeShootC.restart();
 		}
 
-		
-		float time = clock.getElapsedTime().asMicroseconds();
-		time = time / 500;
 		if (window.hasFocus())
 		{
 			if ((Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::A)))) {
-				player.dir = 1; player.speed = 1;//dir =1 - направление вверх, speed =0.1 - скорость движения. Заметьте - время мы уже здесь ни на что не умножаем и нигде не используем каждый раз
-				player.currentFrame += 0.1 * time;
+				player.dir = 1; player.speed = 0.08;//dir =1 - направление вверх, speed =0.1 - скорость движения. Заметьте - время мы уже здесь ни на что не умножаем и нигде не используем каждый раз
+				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
 				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame)+42, 42*3, -42, 42)); //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
 			}
 			
 			if ((Keyboard::isKeyPressed(Keyboard::Right) || (Keyboard::isKeyPressed(Keyboard::D)))) {
-				player.dir = 0; player.speed = 1;//направление вправо, см выше
-				player.currentFrame += 0.1 * time;
+				player.dir = 0; player.speed = 0.08;//направление вправо, см выше
+				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
 				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42 * 3, 42, 42));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Up) || (Keyboard::isKeyPressed(Keyboard::W)))) {
-				player.dir = 3; player.speed = 1;//направление вправо, см выше
-				player.currentFrame += 0.1 * time;
+				player.dir = 3; player.speed = 0.08;//направление вправо, см выше
+				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
 				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 0, 42, 42));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Down) || (Keyboard::isKeyPressed(Keyboard::S)))) { //если нажата клавиша стрелка влево или англ буква А
-				player.dir = 2; player.speed = 1;//направление вправо, см выше
-				player.currentFrame += 0.1 * time;
+				player.dir = 2; player.speed = 0.08;//направление вправо, см выше
+				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
 				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42, 42, -42)); //проходимся по координатам Х. получается 96,96*2,96*3 и опять 96
 			}
@@ -371,8 +360,6 @@ int main()
 		}
 
 		getplayercoordinateforview(player.x, player.y);
-		time = clock.getElapsedTime().asMicroseconds();
-		time = time / 500;
 		for (it = bullets.begin(); it != bullets.end();)
 		{
 			Bullet* b = *it;
@@ -431,10 +418,7 @@ int main()
 
 		window.display();
 	}
-		
-
 	return 0;
-	
 }
 
 void getUserInputData(string& playerName)
