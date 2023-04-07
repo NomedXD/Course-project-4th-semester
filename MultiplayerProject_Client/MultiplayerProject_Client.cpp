@@ -4,6 +4,7 @@
 #include <vector>
 #include "map.h"
 #include "view.h"
+#include <list>
 
 #include "NetworkClient.h"
 
@@ -14,23 +15,25 @@ class Player { // класс Игрока
 public:
 	float x, y, w, h, dx, dy, speed; //координаты игрока х и у, высота ширина, ускорение (по х и по у), сама скорость
 	int dir; //направление (direction) движения игрока
-	String File; //файл с расширением
-	Image image;//сфмл изображение
-	Texture texture;//сфмл текстура
 	Sprite sprite, netGhost;//сфмл спрайт
 	Text t;
 	bool possesed = false;
 	string name;
 	bool turned = false;
+	bool isShoot;
 	float currentFrame;
+	bool FirstShoot;
+	Clock timeShootC;
 public:
 	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
-		dx = 0; dy = 0; speed = 1; dir = 0;
+		dx = 0; dy = 0; speed = 1; dir = 3;
 	//	File = F;
 		w = W; h = H;
 		x = X; y = Y;
 		sprite.setTextureRect(IntRect(0, 0, w, h));
 		currentFrame = 0;
+		isShoot = false;
+		FirstShoot = false;
 	};
 	void update(float time)
 	{
@@ -103,6 +106,7 @@ public:
 	//window.draw(netGhost);
 	window.draw(sprite);
 	window.draw(t);
+
 	};
 	FloatRect getRect() {
 		return FloatRect(x, y, w, h);
@@ -120,6 +124,66 @@ public:
 		window.draw(sprite);
 		window.draw(t);
 	};
+
+};
+
+
+class Bullet{//класс пули
+public:
+	int direction;//направление пули
+	float x, y, w, h, dx, dy, speed; //координаты игрока х и у, высота ширина, ускорение (по х и по у), сама скорость
+	int dir; //направление (direction) движения игрока
+	Sprite sprite;
+	Image BulletImage;//изображение для пули
+	Texture bulletTexture;
+	bool life;
+	Bullet(float X, float Y, int W, int H, int dir){//всё так же, только взяли в конце состояние игрока (int dir)
+		x = X;
+		y = Y;
+		direction = dir;
+		speed = 3;
+		w = h = W;
+		life = true;
+		BulletImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");//загрузили картинку в объект изображения
+		BulletImage.createMaskFromColor(sf::Color::White);//маска для пули по черному цвету
+		bulletTexture.loadFromImage(BulletImage);
+		sprite.setTexture(bulletTexture);
+		sprite.setTextureRect(IntRect(42*7,84,42,42));
+	}
+	FloatRect getRect() {
+		return FloatRect(x, y, w, h);
+	}
+
+
+	void update(float time)
+	{
+		switch (direction)
+		{
+		case 1: dx = -speed; dy = 0;   break;//интовое значение state = left
+		case 0: dx = speed; dy = 0;   break;//интовое значение state = right
+		case 2: dx = 0; dy = speed;   break;//интовое значение state = down
+		case 3: dx = 0; dy = -speed;   break;//интовое значение state = up
+		}
+
+		x += dx * time;//само движение пули по х
+		y += dy * time;//по у
+
+		if (x <= 0) x = 1;// задержка пули в левой стене, чтобы при проседании кадров она случайно не вылетела за предел карты и не было ошибки
+		if (y <= 0) y = 1;
+
+		for (int i = 0; i < HEIGHT_MAP; i++) {//проход по объектам solid
+			for (int j = 0; j < WIDTH_MAP; j++) {
+				
+				if (TileMap[i][j] == '0' && getRect().intersects(FloatRect(j * 42, i * 42, 42, 42))) //если этот объект столкнулся с пулей,
+				{
+					life = false;// то пуля умирает
+				}
+			}
+		}
+		
+
+		sprite.setPosition(x + w / 2, y + h / 2);//задается позицию пуле
+	}
 
 };
 
@@ -160,9 +224,6 @@ int main()
 	getUserInputData(player.name);
 	player.load(t_player,font);
 
-
-
-
 	netC.init();
 	netC.registerOnServer(S_Ip, S_port, player.name);
 
@@ -185,6 +246,9 @@ int main()
 	map.loadFromImage(map_image);//заряжаем текстуру картинкой
 	Sprite s_map;//создаём спрайт для карты
 	s_map.setTexture(map);//заливаем текстуру спрайтом
+
+	std::list<Bullet*> bullets;
+	std::list<Bullet*>::iterator it;
 
 
 
@@ -256,6 +320,18 @@ int main()
 				window.close();
 		}
 
+		// При условии, что был выстрел
+		if (player.isShoot == true)
+		{
+
+			// Создание объекта пули
+			player.isShoot = false;
+			bullets.push_back(new Bullet(player.x-21, player.y-21, 42, 42, player.dir));
+			//shoot.play();
+			player.FirstShoot = true;
+			player.timeShootC.restart();
+		}
+
 		
 		float time = clock.getElapsedTime().asMicroseconds();
 		time = time / 500;
@@ -288,10 +364,22 @@ int main()
 				if (player.currentFrame > 8) player.currentFrame -= 8;
 				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42, 42, -42)); //проходимся по координатам Х. получается 96,96*2,96*3 и опять 96
 			}
+			if (Keyboard::isKeyPressed(Keyboard::Space) && (player.FirstShoot == false || player.timeShootC.getElapsedTime().asSeconds() > 0.5)) {
+				player.isShoot = true;
+
+			}
 		}
+
 		getplayercoordinateforview(player.x, player.y);
 		time = clock.getElapsedTime().asMicroseconds();
 		time = time / 500;
+		for (it = bullets.begin(); it != bullets.end();)
+		{
+			Bullet* b = *it;
+			b->update(time);
+			if (b->life == false) { it = bullets.erase(it); delete b; }// если этот объект мертв, то удаляем его
+			else it++;
+		}
 		player.update(time);
 		for (int i = 0; i < playersVec.size(); i++)
 		{
@@ -334,6 +422,9 @@ int main()
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			playersVec[i].drawVec(window);
+		}
+		for (it = bullets.begin(); it != bullets.end(); it++) {
+			window.draw((*it)->sprite);
 		}
 
 		player.draw(window);
