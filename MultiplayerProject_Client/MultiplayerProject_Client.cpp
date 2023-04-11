@@ -10,7 +10,7 @@
 
 using namespace sf;
 using namespace std;
-
+class Bullet;
 class Player { // класс Игрока
 public:
 	float x, y, w, h, dx, dy, speed; //координаты игрока х и у, высота ширина, ускорение (по х и по у), сама скорость
@@ -24,6 +24,8 @@ public:
 	float currentFrame;
 	bool FirstShoot;
 	Clock timeShootC;
+	std::list<Bullet*> bullets;
+	std::list<Bullet*>::iterator it;
 public:
 	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
 		dx = 0; dy = 0; speed = 0.08; dir = 3;
@@ -237,9 +239,6 @@ int main()
 	Sprite s_map;//создаём спрайт для карты
 	s_map.setTexture(map);//заливаем текстуру спрайтом
 
-	std::list<Bullet*> bullets;
-	std::list<Bullet*>::iterator it;
-
 
 
 	while (window.isOpen())
@@ -318,7 +317,7 @@ int main()
 
 			// Создание объекта пули
 			player.isShoot = false;
-			bullets.push_back(new Bullet(player.x-21, player.y-21, 42, 42, player.dir));
+			player.bullets.push_back(new Bullet(player.x-21, player.y-21, 42, 42, player.dir));
 			//shoot.play();
 			player.FirstShoot = true;
 			player.timeShootC.restart();
@@ -360,12 +359,12 @@ int main()
 		}
 
 		getplayercoordinateforview(player.x, player.y);
-		for (it = bullets.begin(); it != bullets.end();)
+		for (player.it = player.bullets.begin(); player.it != player.bullets.end();)
 		{
-			Bullet* b = *it;
+			Bullet* b = *player.it;
 			b->update(time);
-			if (b->life == false) { it = bullets.erase(it); delete b; }// если этот объект мертв, то удаляем его
-			else it++;
+			if (b->life == false) { player.it = player.bullets.erase(player.it); delete b; }// если этот объект мертв, то удаляем его
+			else player.it++;
 		}
 		player.update(time);
 		for (int i = 0; i < playersVec.size(); i++)
@@ -410,8 +409,8 @@ int main()
 		{
 			playersVec[i].drawVec(window);
 		}
-		for (it = bullets.begin(); it != bullets.end(); it++) {
-			window.draw((*it)->sprite);
+		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++) {
+			window.draw((*player.it)->sprite);
 		}
 
 		player.draw(window);
