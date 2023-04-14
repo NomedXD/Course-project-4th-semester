@@ -22,7 +22,8 @@ struct Client
 	int direction;
 	float curFrame;
 	int bulSize;
-	std::vector<float> bulCoordVec;
+	bool changeBulSize;
+	//std::vector<float> bulCoordVec;
 };
 
 class NetworkServer

@@ -24,6 +24,8 @@ public:
 	float currentFrame;
 	bool FirstShoot;
 	Clock timeShootC;
+	int sendBulletSize;
+	bool changeBulSize;
 	std::list<Bullet*> bullets;
 	std::list<Bullet*>::iterator it;
 public:
@@ -36,6 +38,8 @@ public:
 		currentFrame = 0;
 		isShoot = false;
 		FirstShoot = false;
+		sendBulletSize = 0;
+		changeBulSize = false;
 	};
 	void update(float time)
 	{
@@ -184,7 +188,6 @@ public:
 			}
 		}
 		
-
 		sprite.setPosition(x + w / 2, y + h / 2);//задается позицию пуле
 	}
 
@@ -283,14 +286,8 @@ int main()
 							receivedDataPacket >> curFrame;
 							int size;
 							receivedDataPacket >> size;
-							std::list<Bullet*> bul;
-							for (int i = 0; i < size; i++)
-							{
-								float bulletX, bulletY;
-								receivedDataPacket >> bulletX;
-								receivedDataPacket >> bulletY;
-								bul.push_back(new Bullet(bulletX, bulletY, 42, 42, direction));
-							}
+							bool changeSize;
+							receivedDataPacket >> changeSize;
 							for (int i = 0; i < playersVec.size(); i++)
 							{
 								if (s == playersVec[i].name) {
@@ -302,28 +299,23 @@ int main()
 									playersVec[i].t.setPosition(x + playersVec[i].w / 2 - playersVec[i].t.getGlobalBounds().width / 2, y - playersVec[i].t.getGlobalBounds().height);
 									playersVec[i].dir = direction;
 									playersVec[i].currentFrame = curFrame;
-									if (size != 0)
-									{
-										playersVec[i].bullets.clear();
-										std::copy(bul.begin(), bul.end(), back_inserter(playersVec[i].bullets));
-									}
+									playersVec[i].sendBulletSize = size;
+									playersVec[i].changeBulSize = changeSize;
 								}
 
 							}
 						}
 					}
 				}
-			}
+			}	
 		}
 
 		sendDataPacket.clear();
-		sendDataPacket << "DATA" << player.x << player.y << player.turned << player.dir << player.currentFrame << player.bullets.size();
-		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++) 
-		{
-			sendDataPacket << ((*player.it)->x);
-			sendDataPacket << ((*player.it)->y);
-		}
+		sendDataPacket << "DATA" << player.x << player.y << player.turned << player.dir << player.currentFrame << player.bullets.size() <<
+			player.changeBulSize;
+		player.changeBulSize = false;
 		netC.sendData(sendDataPacket);
+		
 		 
 
 		Event event;
@@ -336,13 +328,21 @@ int main()
 		// При условии, что был выстрел
 		if (player.isShoot == true)
 		{
-
+			player.changeBulSize = true;
 			// Создание объекта пули
 			player.isShoot = false;
 			player.bullets.push_back(new Bullet(player.x-21, player.y-21, 42, 42, player.dir));
 			//shoot.play();
 			player.FirstShoot = true;
 			player.timeShootC.restart();
+		}
+		for (int i = 0; i < playersVec.size(); i++)
+		{
+			if (playersVec[i].changeBulSize == true)
+			{
+				playersVec[i].bullets.push_back(new Bullet(playersVec[i].x - 21, playersVec[i].y - 21, 42, 42, playersVec[i].dir));
+			}
+			
 		}
 
 		if (window.hasFocus())
@@ -388,6 +388,17 @@ int main()
 			if (b->life == false) { player.it = player.bullets.erase(player.it); delete b; }// если этот объект мертв, то удаляем его
 			else player.it++;
 		}
+		for (int i = 0; i < playersVec.size(); i++)
+		{
+			std::list<Bullet*>::iterator iterator;
+			for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end();)
+			{
+				Bullet* b = *iterator;
+				b->update(time);
+				if (b->life == false) { iterator = playersVec[i].bullets.erase(iterator); delete b; }// если этот объект мертв, то удаляем его
+				else iterator++;
+			}
+		}
 		player.update(time);
 		for (int i = 0; i < playersVec.size(); i++)
 		{
@@ -430,24 +441,16 @@ int main()
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			std::list<Bullet*>::iterator iterator;
-			//for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end();)
-			//{
-			//	Bullet* b = *iterator;
-			//	b->update(time);
-			//	if (b->life == false) { iterator = playersVec[i].bullets.erase(iterator); delete b; }// если этот объект мертв, то удаляем его
-			//	else iterator++;
-			//}
-			playersVec[i].drawVec(window);
 			for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end(); iterator++)
 			{
 				window.draw((*iterator)->sprite);
 			}
+			playersVec[i].drawVec(window);
 		}
 		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++) 
 		{
 			window.draw((*player.it)->sprite);
 		}
-
 
 		player.draw(window);
 
