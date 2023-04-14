@@ -15,6 +15,7 @@ class Player { // класс Игрока
 public:
 	float x, y, w, h, dx, dy, speed; //координаты игрока х и у, высота ширина, ускорение (по х и по у), сама скорость
 	int dir; //направление (direction) движения игрока
+	int health;
 	Sprite sprite, netGhost;//сфмл спрайт
 	Text t;
 	bool possesed = false;
@@ -40,6 +41,7 @@ public:
 		FirstShoot = false;
 		sendBulletSize = 0;
 		changeBulSize = false;
+		health = 100;
 	};
 	void update(float time)
 	{
@@ -437,15 +439,45 @@ int main()
 
 				window.draw(s_map);//рисуем квадратики на экран
 			}
-
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			std::list<Bullet*>::iterator iterator;
 			for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end(); iterator++)
 			{
-				window.draw((*iterator)->sprite);
+				if ((*iterator)->getRect().intersects(player.getRect())) {
+					(*iterator)->life = false;
+					player.health -= 50;
+				}
 			}
-			playersVec[i].drawVec(window);
+			
+		}
+		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++)
+		{
+			for (int i = 0; i < playersVec.size(); i++)
+			{
+				if ((*player.it)->getRect().intersects(playersVec[i].getRect())) {
+					(*player.it)->life = false;
+					playersVec[i].health -= 50;
+				}
+			}
+		}
+		for (std::vector<Player>::iterator playersVecorIterator = playersVec.begin(); playersVecorIterator != playersVec.end();) {
+			if ((*playersVecorIterator).health <=0) 
+				{ 
+					playersVecorIterator = playersVec.erase(playersVecorIterator); 
+				}// если этот объект мертв, то удаляем его
+			else playersVecorIterator++;
+		}
+		for (int i = 0; i < playersVec.size(); i++)
+		{
+				
+				std::list<Bullet*>::iterator iterator;
+				for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end(); iterator++)
+				{
+					window.draw((*iterator)->sprite);
+				}
+				playersVec[i].drawVec(window);
+			
 		}
 		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++) 
 		{
@@ -453,6 +485,9 @@ int main()
 		}
 
 		player.draw(window);
+		if (player.health <= 0) {
+			break;
+		}
 
 		window.display();
 	}
