@@ -211,7 +211,7 @@ int main()
 	RenderWindow window(sf::VideoMode(1280, 720), "SFML works!");
 
 	Image playerImage;
-	playerImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");
+	playerImage.loadFromFile("images/tank.png");
 	playerImage.createMaskFromColor(sf::Color::White);
 	Texture t_player;
 	t_player.loadFromImage(playerImage);
@@ -219,7 +219,7 @@ int main()
 	view.reset(FloatRect(player.x, player.y, 1280, 720));
 
 	Font font;
-	font.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/fonts/Inkulinati-Regular.otf");
+	font.loadFromFile("fonts/Inkulinati-Regular.otf");
 	getUserInputData(player.name);
 	player.load(t_player,font);
 
@@ -239,7 +239,7 @@ int main()
 	Clock clock;
 
 	Image map_image;//объект изображения для карты
-	map_image.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");//загружаем файл для карты
+	map_image.loadFromFile("..images/tank.png");//загружаем файл для карты
 	Texture map;//текстура карты
 	map.loadFromImage(map_image);//заряжаем текстуру картинкой
 	Sprite s_map;//создаём спрайт для карты
