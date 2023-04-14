@@ -26,8 +26,5 @@
     <ClInclude Include="NetworkServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\MultiplayerProject_Client\level.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

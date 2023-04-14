@@ -147,7 +147,6 @@
     <ClCompile Include="NetworkServer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\MultiplayerProject_Client\level.h" />
     <ClInclude Include="NetworkServer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
