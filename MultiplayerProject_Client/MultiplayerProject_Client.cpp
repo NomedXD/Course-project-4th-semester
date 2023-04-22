@@ -111,10 +111,11 @@ public:
 	bool isPossesed() { return possesed; };
 	void draw(RenderWindow& window)
 	{
-	//window.draw(netGhost);
-	window.draw(sprite);
-	window.draw(t);
-
+		if (health > 0) {
+			//window.draw(netGhost);
+			window.draw(sprite);
+			window.draw(t);
+		}
 	};
 	FloatRect getRect() {
 		return FloatRect(x, y, w, h);
@@ -239,7 +240,7 @@ int main()
 	Clock clock;
 
 	Image map_image;//объект изображения для карты
-	map_image.loadFromFile("..images/tank.png");//загружаем файл для карты
+	map_image.loadFromFile("images/tank.png");//загружаем файл для карты
 	Texture map;//текстура карты
 	map.loadFromImage(map_image);//заряжаем текстуру картинкой
 	Sprite s_map;//создаём спрайт для карты
