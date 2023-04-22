@@ -7,16 +7,21 @@
 #include <list>
 
 #include "NetworkClient.h"
-
+/*
+* коммит small fix является последним рабочим вариантам. Там реализовано два игрока путем удаления из вектора убитого врага. При этом нет
+* проверки пересечения пули игрока из вектора игроков с еще одним другим игром. В этом случае, игра плохо работает с 3 и более игроками.
+* В данной версии игроки не удаляются из вектора, вместо этого используются if с проверкой здоровья. Кроме того, это позволяет делать проверку 
+* на пересечение других игроков между собой, то есть с 3-мя игроками в данном случае игра работает отлично.
+*/
 using namespace sf;
 using namespace std;
 class Bullet;
-class Player { // класс Игрока
+class Player { 
 public:
-	float x, y, w, h, dx, dy, speed; //координаты игрока х и у, высота ширина, ускорение (по х и по у), сама скорость
-	int dir; //направление (direction) движения игрока
+	float x, y, w, h, dx, dy, speed; 
+	int dir;
 	int health;
-	Sprite sprite, netGhost;//сфмл спрайт
+	Sprite sprite, netGhost;
 	Text t;
 	bool possesed = false;
 	string name;
@@ -32,7 +37,6 @@ public:
 public:
 	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
 		dx = 0; dy = 0; speed = 0.08; dir = 3;
-	//	File = F;
 		w = W; h = H;
 		x = X; y = Y;
 		sprite.setTextureRect(IntRect(0, 0, w, h));
@@ -59,38 +63,38 @@ public:
 		speed = 0;
 		sprite.setPosition(x, y);
 		t.setPosition(x + w / 2 - t.getGlobalBounds().width / 2, y - t.getGlobalBounds().height);
-		interactionWithMap();//вызываем функцию, отвечающую за взаимодействие с картой
+		interactionWithMap();
 	};
 
-	void interactionWithMap()//ф-ция взаимодействия с картой
+	void interactionWithMap()
 	{
 
-		for (int i = y / 42; i < (y + h) / 42; i++)//проходимся по тайликам, контактирующим с игроком, то есть по всем квадратикам размера 32*32, которые мы окрашивали в 9 уроке. про условия читайте ниже.
-			for (int j = x / 42; j < (x + w) / 42; j++)//икс делим на 32, тем самым получаем левый квадратик, с которым персонаж соприкасается. (он ведь больше размера 32*32, поэтому может одновременно стоять на нескольких квадратах). А j<(x + w) / 32 - условие ограничения координат по иксу. то есть координата самого правого квадрата, который соприкасается с персонажем. таким образом идем в цикле слева направо по иксу, проходя по от левого квадрата (соприкасающегося с героем), до правого квадрата (соприкасающегося с героем)
+		for (int i = y / 42; i < (y + h) / 42; i++)
+			for (int j = x / 42; j < (x + w) / 42; j++)
 			{
-				if (TileMap[i][j] == '0')//если наш квадратик соответствует символу 0 (стена), то проверяем "направление скорости" персонажа:
+				if (TileMap[i][j] == '0')
 				{
-					if (dy > 0)//если мы шли вниз,
+					if (dy > 0)
 					{
-						y = i * 42 - h;//то стопорим координату игрек персонажа. сначала получаем координату нашего квадратика на карте(стены) и затем вычитаем из высоты спрайта персонажа.
+						y = i * 42 - h;
 					}
 					if (dy < 0)
 					{
-						y = i * 42 + 42;//аналогично с ходьбой вверх. dy<0, значит мы идем вверх (вспоминаем координаты паинта)
+						y = i * 42 + 42;
 					}
 					if (dx > 0)
 					{
-						x = j * 42 - w;//если идем вправо, то координата Х равна стена (символ 0) минус ширина персонажа
+						x = j * 42 - w;
 					}
 					if (dx < 0)
 					{
-						x = j * 42 + 42;//аналогично идем влево
+						x = j * 42 + 42;
 					}
 				}
 
-				if (TileMap[i][j] == 's') { //если символ равен 's' (камень)
-					x = 300; y = 300;//какое то действие... например телепортация героя
-					TileMap[i][j] = ' ';//убираем камень, типа взяли бонус. можем и не убирать, кстати.
+				if (TileMap[i][j] == 's') {
+					x = 300; y = 300;
+					TileMap[i][j] = ' ';
 				}
 			}
 	}
@@ -98,7 +102,6 @@ public:
 	{
 		sprite.setTexture(texture);
 		sprite.setTextureRect(IntRect(0, 0, w, h));
-		//body.setScale(2, 2);
 		if (!possesed) sprite.setColor(Color::Red);
 		netGhost.setTexture(texture);
 		//name = playerName;
@@ -111,11 +114,9 @@ public:
 	bool isPossesed() { return possesed; };
 	void draw(RenderWindow& window)
 	{
-		if (health > 0) {
-			//window.draw(netGhost);
-			window.draw(sprite);
-			window.draw(t);
-		}
+		//window.draw(netGhost);
+		window.draw(sprite);
+		window.draw(t);
 	};
 	FloatRect getRect() {
 		return FloatRect(x, y, w, h);
@@ -137,24 +138,24 @@ public:
 };
 
 
-class Bullet{//класс пули
+class Bullet{
 public:
-	int direction;//направление пули
-	float x, y, w, h, dx, dy, speed; //координаты игрока х и у, высота ширина, ускорение (по х и по у), сама скорость
-	int dir; //направление (direction) движения игрока
+	int direction;
+	float x, y, w, h, dx, dy, speed; 
+	int dir;
 	Sprite sprite;
-	Image BulletImage;//изображение для пули
+	Image BulletImage;
 	Texture bulletTexture;
 	bool life;
-	Bullet(float X, float Y, int W, int H, int dir){//всё так же, только взяли в конце состояние игрока (int dir)
+	Bullet(float X, float Y, int W, int H, int dir){
 		x = X;
 		y = Y;
 		direction = dir;
 		speed = 0.2;
 		w = h = W;
 		life = true;
-		BulletImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");//загрузили картинку в объект изображения
-		BulletImage.createMaskFromColor(sf::Color::White);//маска для пули по черному цвету
+		BulletImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");
+		BulletImage.createMaskFromColor(sf::Color::White);
 		bulletTexture.loadFromImage(BulletImage);
 		sprite.setTexture(bulletTexture);
 		sprite.setTextureRect(IntRect(42*7,84,42,42));
@@ -169,29 +170,29 @@ public:
 	{
 		switch (direction)
 		{
-		case 1: dx = -speed; dy = 0;   break;//интовое значение state = left
-		case 0: dx = speed; dy = 0;   break;//интовое значение state = right
-		case 2: dx = 0; dy = speed;   break;//интовое значение state = down
-		case 3: dx = 0; dy = -speed;   break;//интовое значение state = up
+		case 1: dx = -speed; dy = 0;   break;
+		case 0: dx = speed; dy = 0;   break;
+		case 2: dx = 0; dy = speed;   break;
+		case 3: dx = 0; dy = -speed;   break;
 		}
 
-		x += dx * time;//само движение пули по х
-		y += dy * time;//по у
+		x += dx * time;
+		y += dy * time;
 
-		if (x <= 0) x = 1;// задержка пули в левой стене, чтобы при проседании кадров она случайно не вылетела за предел карты и не было ошибки
+		if (x <= 0) x = 1;
 		if (y <= 0) y = 1;
 
-		for (int i = 0; i < HEIGHT_MAP; i++) {//проход по объектам solid
+		for (int i = 0; i < HEIGHT_MAP; i++) {
 			for (int j = 0; j < WIDTH_MAP; j++) {
 				
-				if (TileMap[i][j] == '0' && getRect().intersects(FloatRect(j * 42, i * 42, 42, 42))) //если этот объект столкнулся с пулей,
+				if (TileMap[i][j] == '0' && getRect().intersects(FloatRect(j * 42, i * 42, 42, 42))) 
 				{
-					life = false;// то пуля умирает
+					life = false;
 				}
 			}
 		}
 		
-		sprite.setPosition(x + w / 2, y + h / 2);//задается позицию пуле
+		sprite.setPosition(x + w / 2, y + h / 2);
 	}
 
 };
@@ -239,19 +240,18 @@ int main()
 
 	Clock clock;
 
-	Image map_image;//объект изображения для карты
-	map_image.loadFromFile("images/tank.png");//загружаем файл для карты
-	Texture map;//текстура карты
-	map.loadFromImage(map_image);//заряжаем текстуру картинкой
-	Sprite s_map;//создаём спрайт для карты
-	s_map.setTexture(map);//заливаем текстуру спрайтом
+	Image map_image;
+	map_image.loadFromFile("images/tank.png");
+	Texture map;
+	map.loadFromImage(map_image);
+	Sprite s_map;
+	s_map.setTexture(map);
 
 
 
 	while (window.isOpen())
 	{
 		float time = clock.getElapsedTime().asMicroseconds();
-		// Перезагрузка времени
 		clock.restart();
 		time = time / 800;
 
@@ -328,11 +328,9 @@ int main()
 				window.close();
 		}
 
-		// При условии, что был выстрел
 		if (player.isShoot == true)
 		{
 			player.changeBulSize = true;
-			// Создание объекта пули
 			player.isShoot = false;
 			player.bullets.push_back(new Bullet(player.x-21, player.y-21, 42, 42, player.dir));
 			//shoot.play();
@@ -345,37 +343,36 @@ int main()
 			{
 				playersVec[i].bullets.push_back(new Bullet(playersVec[i].x - 21, playersVec[i].y - 21, 42, 42, playersVec[i].dir));
 			}
-			
 		}
 
 		if (window.hasFocus())
 		{
 			if ((Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::A)))) {
-				player.dir = 1; player.speed = 0.08;//dir =1 - направление вверх, speed =0.1 - скорость движения. Заметьте - время мы уже здесь ни на что не умножаем и нигде не используем каждый раз
+				player.dir = 1; player.speed = 0.08;
 				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
-				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame)+42, 42*3, -42, 42)); //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
+				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame)+42, 42*3, -42, 42));
 			}
 			
 			if ((Keyboard::isKeyPressed(Keyboard::Right) || (Keyboard::isKeyPressed(Keyboard::D)))) {
-				player.dir = 0; player.speed = 0.08;//направление вправо, см выше
+				player.dir = 0; player.speed = 0.08;
 				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
-				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42 * 3, 42, 42));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
+				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42 * 3, 42, 42));  
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Up) || (Keyboard::isKeyPressed(Keyboard::W)))) {
-				player.dir = 3; player.speed = 0.08;//направление вправо, см выше
+				player.dir = 3; player.speed = 0.08;
 				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
-				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 0, 42, 42));  //через объект p класса player меняем спрайт, делая анимацию (используя оператор точку)
+				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 0, 42, 42));
 			}
 
-			if ((Keyboard::isKeyPressed(Keyboard::Down) || (Keyboard::isKeyPressed(Keyboard::S)))) { //если нажата клавиша стрелка влево или англ буква А
-				player.dir = 2; player.speed = 0.08;//направление вправо, см выше
+			if ((Keyboard::isKeyPressed(Keyboard::Down) || (Keyboard::isKeyPressed(Keyboard::S)))) {
+				player.dir = 2; player.speed = 0.08;
 				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
-				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42, 42, -42)); //проходимся по координатам Х. получается 96,96*2,96*3 и опять 96
+				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42, 42, -42)); 
 			}
 			if (Keyboard::isKeyPressed(Keyboard::Space) && (player.FirstShoot == false || player.timeShootC.getElapsedTime().asSeconds() > 0.5)) {
 				player.isShoot = true;
@@ -388,67 +385,85 @@ int main()
 		{
 			Bullet* b = *player.it;
 			b->update(time);
-			if (b->life == false) { player.it = player.bullets.erase(player.it); delete b; }// если этот объект мертв, то удаляем его
+			if (b->life == false) { player.it = player.bullets.erase(player.it); delete b; }
 			else player.it++;
 		}
 		for (int i = 0; i < playersVec.size(); i++)
 		{
-			std::list<Bullet*>::iterator iterator;
-			for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end();)
-			{
-				Bullet* b = *iterator;
-				b->update(time);
-				if (b->life == false) { iterator = playersVec[i].bullets.erase(iterator); delete b; }// если этот объект мертв, то удаляем его
-				else iterator++;
+			if (playersVec[i].health > 0) {
+				std::list<Bullet*>::iterator iterator;
+				for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end();)
+				{
+					Bullet* b = *iterator;
+					b->update(time);
+					if (b->life == false) { iterator = playersVec[i].bullets.erase(iterator); delete b; }
+					else iterator++;
+				}
 			}
 		}
 		player.update(time);
 		for (int i = 0; i < playersVec.size(); i++)
 		{
-			if (player.getRect().intersects(playersVec[i].getRect())) {
-				if (player.dy > 0)//если мы шли вниз,
+			if (player.getRect().intersects(playersVec[i].getRect()) && playersVec[i].health >0) {
+				if (player.dy > 0)
 				{
-					player.y = playersVec[i].y - player.h;//то стопорим координату игрек персонажа. сначала получаем координату нашего квадратика на карте(стены) и затем вычитаем из высоты спрайта персонажа.
+					player.y = playersVec[i].y - player.h;
 				}
 				if (player.dy < 0)
 				{
-					player.y = playersVec[i].y + player.h;//аналогично с ходьбой вверх. dy<0, значит мы идем вверх (вспоминаем координаты паинта)
+					player.y = playersVec[i].y + player.h;
 				}
 				if (player.dx > 0)
 				{
-					player.x = playersVec[i].x - player.w;//если идем вправо, то координата Х равна стена (символ 0) минус ширина персонажа
+					player.x = playersVec[i].x - player.w;
 				}
 				if (player.dx < 0)
 				{
-					player.x = playersVec[i].x +player.w;//аналогично идем влево
+					player.x = playersVec[i].x +player.w;
 				}
 			}
 		}
 
 		window.setView(view);
 		window.clear();
-		/////////////////////////////Рисуем карту/////////////////////
-		for (int i = 0; i < HEIGHT_MAP; i++)
+
+		for (int i = 0; i < HEIGHT_MAP; i++) 
+		{
 			for (int j = 0; j < WIDTH_MAP; j++)
 			{
-				if (TileMap[i][j] == ' ')  s_map.setTextureRect(IntRect(0, 42*2, 42, 42)); //если встретили символ пробел, то рисуем 1й квадратик
-				if (TileMap[i][j] == 's')  s_map.setTextureRect(IntRect(42*3, 42 * 2, 42, 42));//если встретили символ s, то рисуем 2й квадратик
-				if ((TileMap[i][j] == '0')) s_map.setTextureRect(IntRect(42*2, 42 * 2, 42, 42));//если встретили символ 0, то рисуем 3й квадратик
-
-
-				s_map.setPosition(j * 42, i * 42);//по сути раскидывает квадратики, превращая в карту. то есть задает каждому из них позицию. если убрать, то вся карта нарисуется в одном квадрате 32*32 и мы увидим один квадрат
-
-				window.draw(s_map);//рисуем квадратики на экран
+				if (TileMap[i][j] == ' ')  s_map.setTextureRect(IntRect(0, 42 * 2, 42, 42));
+				if (TileMap[i][j] == 's')  s_map.setTextureRect(IntRect(42 * 3, 42 * 2, 42, 42));
+				if ((TileMap[i][j] == '0')) s_map.setTextureRect(IntRect(42 * 2, 42 * 2, 42, 42));
+				s_map.setPosition(j * 42, i * 42);
+				window.draw(s_map);
 			}
+		}
 		for (int i = 0; i < playersVec.size(); i++)
 		{
-			std::list<Bullet*>::iterator iterator;
-			for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end(); iterator++)
-			{
-				if ((*iterator)->getRect().intersects(player.getRect())) {
-					(*iterator)->life = false;
-					player.health -= 50;
+			if (playersVec[i].health > 0) {
+				std::list<Bullet*>::iterator iterator;
+				for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end(); iterator++)
+				{
+					if ((*iterator)->getRect().intersects(player.getRect())) {
+						(*iterator)->life = false;
+						player.health -= 50;
+					}
+					for (int j = 0; j < i; j++) 
+					{
+						if ((*iterator)->getRect().intersects(playersVec[j].getRect()) && playersVec[j].health >0) {
+							(*iterator)->life = false;
+							playersVec[j].health -= 50;
+						}
+					}
+					for (int j = i+1; j < playersVec.size(); j++)
+					{
+						if ((*iterator)->getRect().intersects(playersVec[j].getRect()) && playersVec[j].health > 0) {
+							(*iterator)->life = false;
+							playersVec[j].health -= 50;
+						}
+					}
 				}
+				
 			}
 			
 		}
@@ -456,28 +471,32 @@ int main()
 		{
 			for (int i = 0; i < playersVec.size(); i++)
 			{
-				if ((*player.it)->getRect().intersects(playersVec[i].getRect())) {
-					(*player.it)->life = false;
-					playersVec[i].health -= 50;
+				if (playersVec[i].health > 0) {
+					if ((*player.it)->getRect().intersects(playersVec[i].getRect())) {
+						(*player.it)->life = false;
+						playersVec[i].health -= 50;
+					}
 				}
 			}
 		}
-		for (std::vector<Player>::iterator playersVecorIterator = playersVec.begin(); playersVecorIterator != playersVec.end();) {
-			if ((*playersVecorIterator).health <=0) 
-				{ 
-					playersVecorIterator = playersVec.erase(playersVecorIterator); 
-				}// если этот объект мертв, то удаляем его
-			else playersVecorIterator++;
-		}
+		//for (std::vector<Player>::iterator playersVecorIterator = playersVec.begin(); playersVecorIterator != playersVec.end();) {
+		//	if ((*playersVecorIterator).health <=0) 
+		//		{ 
+		//			playersVecorIterator = playersVec.erase(playersVecorIterator); 
+		//		}// если этот объект мертв, то удаляем его
+		//	else playersVecorIterator++;
+		//}
 		for (int i = 0; i < playersVec.size(); i++)
 		{
-				
+			if (playersVec[i].health > 0) {
+
 				std::list<Bullet*>::iterator iterator;
 				for (iterator = playersVec[i].bullets.begin(); iterator != playersVec[i].bullets.end(); iterator++)
 				{
 					window.draw((*iterator)->sprite);
 				}
 				playersVec[i].drawVec(window);
+			}
 			
 		}
 		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++) 
@@ -497,7 +516,7 @@ int main()
 
 void getUserInputData(string& playerName)
 {
-	cout << "Enter server IP: ";//huytyttyt
+	cout << "Enter server IP: ";
 	cin >> S_Ip;
 	//S_Ip = "localhost";
 	cout << endl;
