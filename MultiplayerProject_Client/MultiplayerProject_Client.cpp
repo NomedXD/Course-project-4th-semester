@@ -159,10 +159,10 @@ public:
 		bulletTexture.loadFromImage(BulletImage);
 		sprite.setTexture(bulletTexture);
 		sprite.setTextureRect(IntRect(42*7,84,42,42));
-		sprite.setPosition(x + w / 2, y + h / 2);
+		sprite.setPosition(x, y);
 	}
 	FloatRect getRect() {
-		return FloatRect(x, y, w, h);
+		return FloatRect(x + 16, y + 16, 9, 9);
 	}
 
 
@@ -192,7 +192,7 @@ public:
 			}
 		}
 		
-		sprite.setPosition(x + w / 2, y + h / 2);
+		sprite.setPosition(x, y);
 	}
 
 };
@@ -332,7 +332,7 @@ int main()
 		{
 			player.changeBulSize = true;
 			player.isShoot = false;
-			player.bullets.push_back(new Bullet(player.x-21, player.y-21, 42, 42, player.dir));
+			player.bullets.push_back(new Bullet(player.x, player.y, 42, 42, player.dir));
 			//shoot.play();
 			player.FirstShoot = true;
 			player.timeShootC.restart();
