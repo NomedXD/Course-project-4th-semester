@@ -5,6 +5,7 @@
 #include "map.h"
 #include "view.h"
 #include <list>
+#include "LifeBar.h"
 
 #include "NetworkClient.h"
 /*
@@ -218,6 +219,7 @@ int main()
 	t_player.loadFromImage(playerImage);
 	Player player(250, 250, 42, 42, true);
 	view.reset(FloatRect(player.x, player.y, 1280, 720));
+	LifeBar lifeBarPlayer;
 
 	Font font;
 	font.loadFromFile("fonts/Inkulinati-Regular.otf");
@@ -477,6 +479,7 @@ int main()
 			}
 		}
 		player.update(time);
+		lifeBarPlayer.update(player.health);
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			if (player.getRect().intersects(playersVec[i].getRect()) && playersVec[i].health >0) {
@@ -583,6 +586,8 @@ int main()
 		if (player.health <= 0) {
 			break;
 		}
+
+		lifeBarPlayer.draw(window);//рисуем полоску здоровья
 
 		window.display();
 	}

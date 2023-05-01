@@ -142,10 +142,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="LifeBar.cpp" />
     <ClCompile Include="MultiplayerProject_Client.cpp" />
     <ClCompile Include="NetworkClient.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="LifeBar.h" />
     <ClInclude Include="map.h" />
     <ClInclude Include="NetworkClient.h" />
     <ClInclude Include="view.h" />

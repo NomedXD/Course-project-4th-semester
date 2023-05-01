@@ -9,7 +9,7 @@ View getplayercoordinateforview(float x, float y) { //функция для считывания коо
 
 	if (x < 640) tempX = 640;//убираем из вида левую сторону
 	if (y < 360) tempY = 360;//верхнюю сторону
-	if (y > 690) tempY = 690;//нижнюю сторону	
+	if (y > 480) tempY = 480;//нижнюю сторону	
 
 	view.setCenter(tempX, tempY); //следим за игроком, передавая его координаты. 
 	return view;
