@@ -141,8 +141,7 @@ public:
 class Bullet{
 public:
 	int direction;
-	float x, y, w, h, dx, dy, speed; 
-	int dir;
+	float x, y, w, h, dx, dy, speed;
 	Sprite sprite;
 	Image BulletImage;
 	Texture bulletTexture;
@@ -154,7 +153,7 @@ public:
 		speed = 0.2;
 		w = h = W;
 		life = true;
-		BulletImage.loadFromFile("D:/MultiPlayerProject-master/MultiplayerProject_Client/Debug/images/tank.png");
+		BulletImage.loadFromFile("images/tank.png");
 		BulletImage.createMaskFromColor(sf::Color::White);
 		bulletTexture.loadFromImage(BulletImage);
 		sprite.setTexture(bulletTexture);
@@ -206,7 +205,7 @@ string clientName;
 NetworkClient netC;
 
 void getUserInputData(string& playerName);
-void addPlayer(Texture& t_player, Font& font, string clientName);
+void addPlayer(Texture& t_player, Font& font, string clientName, int spawnX, int spawnY);
 
 int main()
 {
@@ -232,8 +231,60 @@ int main()
 	netC.receiveConnectedClientsNames(namesVec);
 	for (int i = 0; i < namesVec.size(); i++)
 	{
-		addPlayer(t_player,font, namesVec[i]);
+		int tempCoordY = 0;
+		int tempCoordX = 0;
+		switch (i)
+		{
+		case 0: {
+			int tempCoordX = 250;
+			int tempCoordY = 250;
+			break;
+		}
+		case 1: {
+			int tempCoordX = 250;
+			int tempCoordY = 714;
+			break;
+		}
+		case 2: {
+			int tempCoordX = 1340;
+			int tempCoordY = 250;
+			break;
+		}
+		default:
+			int tempCoordX = 250;
+			int tempCoordY = 250;
+			break;
+		}
+		addPlayer(t_player,font, namesVec[i], tempCoordX, tempCoordY);
 	}
+	switch (namesVec.size())
+	{
+	case 0: {
+		player.x = 250;
+		player.y = 250;
+		view.reset(FloatRect(player.x, player.y, 1280, 720));
+		break;
+	}
+	case 1: {
+		player.x = 250;
+		player.y = 714;
+		view.reset(FloatRect(player.x, player.y, 1280, 720));
+		break;
+	}
+	case 2: {
+		player.x = 1340;
+		player.y = 250;
+		view.reset(FloatRect(player.x, player.y, 1280, 720));
+		break;
+	}
+	default: {
+		player.x = 1340;
+		player.y = 714;
+		view.reset(FloatRect(player.x, player.y, 1280, 720));
+		break;
+	}
+	}
+
 
 	Packet receivedDataPacket;
 	Packet sendDataPacket;
@@ -268,7 +319,31 @@ int main()
 						{
 							if (s != clientName)
 							{
-								addPlayer(t_player,font, s);
+								int tempCoordX = 0;
+								int tempCoordY = 0;
+								switch (playersVec.size())
+								{
+								case 0: {
+									tempCoordX = 250;
+									tempCoordY = 714;
+									break;
+								}
+								case 1: {
+									tempCoordX = 1340;
+									tempCoordY = 250;
+									break;
+								}
+								case 2: {
+									tempCoordX = 1340;
+									tempCoordY = 714;
+									break;
+								}
+								default:
+									tempCoordX = 1340;
+									tempCoordY = 714;
+									break;
+								}
+								addPlayer(t_player,font, s, tempCoordX, tempCoordY);
 								cout << "New player connected: " << playersVec.back().name << endl;
 							}
 						}
@@ -341,7 +416,7 @@ int main()
 		{
 			if (playersVec[i].changeBulSize == true)
 			{
-				playersVec[i].bullets.push_back(new Bullet(playersVec[i].x - 21, playersVec[i].y - 21, 42, 42, playersVec[i].dir));
+				playersVec[i].bullets.push_back(new Bullet(playersVec[i].x, playersVec[i].y, 42, 42, playersVec[i].dir));
 			}
 		}
 
@@ -527,9 +602,9 @@ void getUserInputData(string& playerName)
 	cin >> playerName;
 };
 
-void addPlayer(Texture& t_player, Font& font, string clientName)
+void addPlayer(Texture& t_player, Font& font, string clientName, int spawnX, int spawnY)
 {
-	Player p(250, 250, 42, 42, true);
+	Player p(spawnX, spawnY, 42, 42, true);
 	playersVec.push_back(p);
 	playersVec.back().name = clientName;
 	playersVec.back().load(t_player,font);
