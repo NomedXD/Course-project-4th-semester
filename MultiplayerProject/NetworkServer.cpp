@@ -31,9 +31,7 @@ Socket::Status NetworkServer::acceptIncomingConnection()
 	if (regStep == 0)
 	{
 		if (listener.isBlocking()) listener.setBlocking(false);
-		
 
-		//cout << "Port -" << listener.getLocalPort() << endl;
 		if (listener.accept(regSocket) == Socket::Status::Done)
 		{
 			cout << "acceptIncomingConnection(): Accepted new connection\n";

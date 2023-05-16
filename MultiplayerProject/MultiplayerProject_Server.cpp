@@ -23,10 +23,6 @@ int main()
 		packet << netS.clientsVec[i].name << netS.clientsVec[i].pos.x << netS.clientsVec[i].pos.y << 
 			netS.clientsVec[i].turned << netS.clientsVec[i].direction << netS.clientsVec[i].curFrame <<
 			netS.clientsVec[i].bulSize << netS.clientsVec[i].changeBulSize;
-		//for (int j = 0; j < netS.clientsVec[i].bulSize * 2; j++)
-		//{
-		//	packet << netS.clientsVec[i].bulCoordVec.at(j);
-		//}
 	}
 
 	while (true)
@@ -98,8 +94,6 @@ int main()
 			}
 		}
 	}
-
-
 	getchar();
 	return 0;
 }

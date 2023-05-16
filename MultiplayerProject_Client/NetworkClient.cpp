@@ -73,11 +73,6 @@ Socket::Status NetworkClient::receiveConnectedClientsNames(vector<string>& names
 				}
 			}
 			cout << "receiveConnectedClientsNames() :Client names read\n";
-			/*for (int i = 0; i < namesVec.size(); i++)
-			{
-				cout << namesVec[i];
-			}
-			cout << endl;*/
 			return Socket::Status::Done;
 
 		}
@@ -96,7 +91,6 @@ Socket::Status NetworkClient::receiveData(Packet& dataPacket, IpAddress S_Ip, un
 	{
 		if (dataPacket.getDataSize() > 0)
 		{
-			//cout << "receiveData(): Data received\n";
 			return Socket::Status::Done;
 		}
 		else

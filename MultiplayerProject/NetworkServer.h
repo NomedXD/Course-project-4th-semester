@@ -23,7 +23,6 @@ struct Client
 	float curFrame;
 	int bulSize;
 	bool changeBulSize;
-	//std::vector<float> bulCoordVec;
 };
 
 class NetworkServer

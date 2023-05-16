@@ -11,12 +11,7 @@ public:
 	Sprite s;
 	int max;
 	RectangleShape bar;
-
 	LifeBar();
-
-	// k - текущее здоровье
 	void update(int k);
-
 	void draw(RenderWindow& window);
-
 };

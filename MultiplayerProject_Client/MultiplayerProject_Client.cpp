@@ -11,15 +11,15 @@
 /*
 * коммит small fix является последним рабочим вариантам. Там реализовано два игрока путем удаления из вектора убитого врага. При этом нет
 * проверки пересечения пули игрока из вектора игроков с еще одним другим игром. В этом случае, игра плохо работает с 3 и более игроками.
-* В данной версии игроки не удаляются из вектора, вместо этого используются if с проверкой здоровья. Кроме того, это позволяет делать проверку 
+* В данной версии игроки не удаляются из вектора, вместо этого используются if с проверкой здоровья. Кроме того, это позволяет делать проверку
 * на пересечение других игроков между собой, то есть с 3-мя игроками в данном случае игра работает отлично.
 */
 using namespace sf;
 using namespace std;
 class Bullet;
-class Player { 
+class Player {
 public:
-	float x, y, w, h, dx, dy, speed; 
+	float x, y, w, h, dx, dy, speed;
 	int dir;
 	int health;
 	Sprite sprite, netGhost;
@@ -36,7 +36,7 @@ public:
 	std::list<Bullet*> bullets;
 	std::list<Bullet*>::iterator it;
 public:
-	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) { 
+	Player(float X, float Y, float W, float H, bool possesed = false) :possesed(possesed) {
 		dx = 0; dy = 0; speed = 0.08; dir = 3;
 		w = W; h = H;
 		x = X; y = Y;
@@ -48,6 +48,7 @@ public:
 		changeBulSize = false;
 		health = 100;
 	};
+
 	void update(float time)
 	{
 		switch (dir)
@@ -99,32 +100,34 @@ public:
 				}
 			}
 	}
+
 	void load(Texture& texture, Font& font)
 	{
 		sprite.setTexture(texture);
 		sprite.setTextureRect(IntRect(0, 0, w, h));
 		if (!possesed) sprite.setColor(Color::Red);
 		netGhost.setTexture(texture);
-		//name = playerName;
 
 		t.setFont(font);
 		t.setString(name);
 		t.setFillColor(sf::Color::Red);
 		t.setPosition(w / 2 - t.getGlobalBounds().width / 2, y - t.getGlobalBounds().height);
 	};
+
 	bool isPossesed() { return possesed; };
+
 	void draw(RenderWindow& window)
 	{
-		//window.draw(netGhost);
 		window.draw(sprite);
 		window.draw(t);
 	};
+
 	FloatRect getRect() {
 		return FloatRect(x, y, w, h);
 	}
+
 	void drawVec(RenderWindow& window)
 	{
-		//window.draw(netGhost);
 		switch (dir)
 		{
 		case 0: {sprite.setTextureRect(IntRect(42 * int(currentFrame), 42 * 3, 42, 42)); break; }
@@ -135,11 +138,10 @@ public:
 		window.draw(sprite);
 		window.draw(t);
 	};
-
 };
 
 
-class Bullet{
+class Bullet {
 public:
 	int direction;
 	float x, y, w, h, dx, dy, speed;
@@ -147,7 +149,7 @@ public:
 	Image BulletImage;
 	Texture bulletTexture;
 	bool life;
-	Bullet(float X, float Y, int W, int H, int dir){
+	Bullet(float X, float Y, int W, int H, int dir) {
 		x = X;
 		y = Y;
 		direction = dir;
@@ -158,7 +160,7 @@ public:
 		BulletImage.createMaskFromColor(sf::Color::White);
 		bulletTexture.loadFromImage(BulletImage);
 		sprite.setTexture(bulletTexture);
-		sprite.setTextureRect(IntRect(42*7,84,42,42));
+		sprite.setTextureRect(IntRect(42 * 7, 84, 42, 42));
 		sprite.setPosition(x, y);
 	}
 	FloatRect getRect() {
@@ -175,34 +177,28 @@ public:
 		case 2: dx = 0; dy = speed;   break;
 		case 3: dx = 0; dy = -speed;   break;
 		}
-
 		x += dx * time;
 		y += dy * time;
-
 		if (x <= 0) x = 1;
 		if (y <= 0) y = 1;
 
 		for (int i = 0; i < HEIGHT_MAP; i++) {
 			for (int j = 0; j < WIDTH_MAP; j++) {
-				
-				if (TileMap[i][j] == '0' && getRect().intersects(FloatRect(j * 42, i * 42, 42, 42))) 
+
+				if (TileMap[i][j] == '0' && getRect().intersects(FloatRect(j * 42, i * 42, 42, 42)))
 				{
 					life = false;
 				}
 			}
 		}
-		
 		sprite.setPosition(x, y);
 	}
-
 };
 
 vector<Player> playersVec;
-
 IpAddress S_Ip;
 unsigned short S_port;
 string clientName;
-
 NetworkClient netC;
 
 void getUserInputData(string& playerName);
@@ -224,7 +220,7 @@ int main()
 	Font font;
 	font.loadFromFile("fonts/Inkulinati-Regular.otf");
 	getUserInputData(player.name);
-	player.load(t_player,font);
+	player.load(t_player, font);
 
 	netC.init();
 	netC.registerOnServer(S_Ip, S_port, player.name);
@@ -257,8 +253,9 @@ int main()
 			int tempCoordY = 250;
 			break;
 		}
-		addPlayer(t_player,font, namesVec[i], tempCoordX, tempCoordY);
+		addPlayer(t_player, font, namesVec[i], tempCoordX, tempCoordY);
 	}
+
 	switch (namesVec.size())
 	{
 	case 0: {
@@ -287,20 +284,15 @@ int main()
 	}
 	}
 
-
 	Packet receivedDataPacket;
 	Packet sendDataPacket;
-
 	Clock clock;
-
 	Image map_image;
 	map_image.loadFromFile("images/tank.png");
 	Texture map;
 	map.loadFromImage(map_image);
 	Sprite s_map;
 	s_map.setTexture(map);
-
-
 
 	while (window.isOpen())
 	{
@@ -345,11 +337,12 @@ int main()
 									tempCoordY = 714;
 									break;
 								}
-								addPlayer(t_player,font, s, tempCoordX, tempCoordY);
+								addPlayer(t_player, font, s, tempCoordX, tempCoordY);
 								cout << "New player connected: " << playersVec.back().name << endl;
 							}
 						}
 					}
+
 					if (s == "DATA")
 					{
 						while (!receivedDataPacket.endOfPacket())
@@ -382,12 +375,11 @@ int main()
 									playersVec[i].sendBulletSize = size;
 									playersVec[i].changeBulSize = changeSize;
 								}
-
 							}
 						}
 					}
 				}
-			}	
+			}
 		}
 
 		sendDataPacket.clear();
@@ -395,10 +387,8 @@ int main()
 			player.changeBulSize;
 		player.changeBulSize = false;
 		netC.sendData(sendDataPacket);
-		
-		 
-
 		Event event;
+
 		while (window.pollEvent(event))
 		{
 			if (event.type == sf::Event::Closed)
@@ -414,6 +404,7 @@ int main()
 			player.FirstShoot = true;
 			player.timeShootC.restart();
 		}
+
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			if (playersVec[i].changeBulSize == true)
@@ -428,14 +419,14 @@ int main()
 				player.dir = 1; player.speed = 0.08;
 				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
-				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame)+42, 42*3, -42, 42));
+				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame) + 42, 42 * 3, -42, 42));
 			}
-			
+
 			if ((Keyboard::isKeyPressed(Keyboard::Right) || (Keyboard::isKeyPressed(Keyboard::D)))) {
 				player.dir = 0; player.speed = 0.08;
 				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
-				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42 * 3, 42, 42));  
+				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42 * 3, 42, 42));
 			}
 
 			if ((Keyboard::isKeyPressed(Keyboard::Up) || (Keyboard::isKeyPressed(Keyboard::W)))) {
@@ -449,7 +440,7 @@ int main()
 				player.dir = 2; player.speed = 0.08;
 				player.currentFrame += 0.005 * time;
 				if (player.currentFrame > 8) player.currentFrame -= 8;
-				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42, 42, -42)); 
+				player.sprite.setTextureRect(IntRect(42 * int(player.currentFrame), 42, 42, -42));
 			}
 			if (Keyboard::isKeyPressed(Keyboard::Space) && (player.FirstShoot == false || player.timeShootC.getElapsedTime().asSeconds() > 0.5)) {
 				player.isShoot = true;
@@ -465,6 +456,7 @@ int main()
 			if (b->life == false) { player.it = player.bullets.erase(player.it); delete b; }
 			else player.it++;
 		}
+
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			if (playersVec[i].health > 0) {
@@ -478,11 +470,13 @@ int main()
 				}
 			}
 		}
+
 		player.update(time);
 		lifeBarPlayer.update(player.health);
+
 		for (int i = 0; i < playersVec.size(); i++)
 		{
-			if (player.getRect().intersects(playersVec[i].getRect()) && playersVec[i].health >0) {
+			if (player.getRect().intersects(playersVec[i].getRect()) && playersVec[i].health > 0) {
 				if (player.dy > 0)
 				{
 					player.y = playersVec[i].y - player.h;
@@ -497,7 +491,7 @@ int main()
 				}
 				if (player.dx < 0)
 				{
-					player.x = playersVec[i].x +player.w;
+					player.x = playersVec[i].x + player.w;
 				}
 			}
 		}
@@ -505,9 +499,9 @@ int main()
 		window.setView(view);
 		window.clear();
 
-		for (int i = 0; i < HEIGHT_MAP; i++) 
+		for (int i = 0; i < HEIGHT_MAP; i++)
 		{
-			for (int j = 0; j < WIDTH_MAP; j++)
+			for (int j = 0; j < WIDTH_MAP - 1; j++)
 			{
 				if (TileMap[i][j] == ' ')  s_map.setTextureRect(IntRect(0, 42 * 2, 42, 42));
 				if (TileMap[i][j] == 's')  s_map.setTextureRect(IntRect(42 * 3, 42 * 2, 42, 42));
@@ -516,6 +510,7 @@ int main()
 				window.draw(s_map);
 			}
 		}
+
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			if (playersVec[i].health > 0) {
@@ -526,14 +521,14 @@ int main()
 						(*iterator)->life = false;
 						player.health -= 50;
 					}
-					for (int j = 0; j < i; j++) 
+					for (int j = 0; j < i; j++)
 					{
-						if ((*iterator)->getRect().intersects(playersVec[j].getRect()) && playersVec[j].health >0) {
+						if ((*iterator)->getRect().intersects(playersVec[j].getRect()) && playersVec[j].health > 0) {
 							(*iterator)->life = false;
 							playersVec[j].health -= 50;
 						}
 					}
-					for (int j = i+1; j < playersVec.size(); j++)
+					for (int j = i + 1; j < playersVec.size(); j++)
 					{
 						if ((*iterator)->getRect().intersects(playersVec[j].getRect()) && playersVec[j].health > 0) {
 							(*iterator)->life = false;
@@ -541,10 +536,9 @@ int main()
 						}
 					}
 				}
-				
 			}
-			
 		}
+
 		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++)
 		{
 			for (int i = 0; i < playersVec.size(); i++)
@@ -557,13 +551,7 @@ int main()
 				}
 			}
 		}
-		//for (std::vector<Player>::iterator playersVecorIterator = playersVec.begin(); playersVecorIterator != playersVec.end();) {
-		//	if ((*playersVecorIterator).health <=0) 
-		//		{ 
-		//			playersVecorIterator = playersVec.erase(playersVecorIterator); 
-		//		}// если этот объект мертв, то удаляем его
-		//	else playersVecorIterator++;
-		//}
+
 		for (int i = 0; i < playersVec.size(); i++)
 		{
 			if (playersVec[i].health > 0) {
@@ -575,9 +563,10 @@ int main()
 				}
 				playersVec[i].drawVec(window);
 			}
-			
+
 		}
-		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++) 
+
+		for (player.it = player.bullets.begin(); player.it != player.bullets.end(); player.it++)
 		{
 			window.draw((*player.it)->sprite);
 		}
@@ -586,9 +575,7 @@ int main()
 		if (player.health <= 0) {
 			break;
 		}
-
-		lifeBarPlayer.draw(window);//рисуем полоску здоровья
-
+		lifeBarPlayer.draw(window);
 		window.display();
 	}
 	return 0;
@@ -612,5 +599,5 @@ void addPlayer(Texture& t_player, Font& font, string clientName, int spawnX, int
 	Player p(spawnX, spawnY, 42, 42, true);
 	playersVec.push_back(p);
 	playersVec.back().name = clientName;
-	playersVec.back().load(t_player,font);
+	playersVec.back().load(t_player, font);
 };
