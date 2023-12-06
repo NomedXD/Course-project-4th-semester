@@ -6,8 +6,8 @@
 #include "view.h"
 #include <list>
 #include "LifeBar.h"
-
 #include "NetworkClient.h"
+#include "SFML/Audio.hpp"
 /*
 * коммит small fix является последним рабочим вариантам. Там реализовано два игрока путем удаления из вектора убитого врага. При этом нет
 * проверки пересечения пули игрока из вектора игроков с еще одним другим игром. В этом случае, игра плохо работает с 3 и более игроками.
@@ -95,8 +95,10 @@ public:
 				}
 
 				if (TileMap[i][j] == 's') {
-					x = 300; y = 300;
-					TileMap[i][j] = ' ';
+					x = 1300; y = 336;
+				}
+				if (TileMap[i][j] == 'c') {
+					x = 378; y = 420;
 				}
 			}
 	}
@@ -207,10 +209,16 @@ void addPlayer(Texture& t_player, Font& font, string clientName, int spawnX, int
 int main()
 {
 	RenderWindow window(sf::VideoMode(1280, 720), "SFML works!");
+	SoundBuffer buffer;
+	buffer.loadFromFile("music/wall.wav");
+	Sound sound;
+	sound.setBuffer(buffer);
 
 	Image playerImage;
 	playerImage.loadFromFile("images/tank.png");
 	playerImage.createMaskFromColor(sf::Color::White);
+	playerImage.createMaskFromColor(Color(254,254,254));
+	playerImage.createMaskFromColor(Color(254, 254, 254));
 	Texture t_player;
 	t_player.loadFromImage(playerImage);
 	Player player(250, 250, 42, 42, true);
@@ -444,7 +452,7 @@ int main()
 			}
 			if (Keyboard::isKeyPressed(Keyboard::Space) && (player.FirstShoot == false || player.timeShootC.getElapsedTime().asSeconds() > 0.5)) {
 				player.isShoot = true;
-
+				sound.play();
 			}
 		}
 
@@ -504,7 +512,7 @@ int main()
 			for (int j = 0; j < WIDTH_MAP - 1; j++)
 			{
 				if (TileMap[i][j] == ' ')  s_map.setTextureRect(IntRect(0, 42 * 2, 42, 42));
-				if (TileMap[i][j] == 's')  s_map.setTextureRect(IntRect(42 * 3, 42 * 2, 42, 42));
+				if ((TileMap[i][j] == 's') || (TileMap[i][j] == 'c'))  s_map.setTextureRect(IntRect(42 * 3, 42 * 2, 42, 42));
 				if ((TileMap[i][j] == '0')) s_map.setTextureRect(IntRect(42 * 2, 42 * 2, 42, 42));
 				s_map.setPosition(j * 42, i * 42);
 				window.draw(s_map);
